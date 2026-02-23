@@ -1,0 +1,96 @@
+/**
+ * Home Page Client Component
+ *
+ * Single-page layout:
+ * - Minimal hero with "TOP" images (no branding, no search)
+ * - Category pills (only when populated)
+ * - Trending wallpapers
+ * - Latest wallpapers
+ * - No Premium CTA (crown is in header)
+ */
+
+'use client';
+
+import {
+  Flame,
+  TrendingUp,
+  ArrowRight,
+} from 'lucide-react';
+import { useModalStore } from '@/stores/modalStore';
+import { HeroSection } from './HeroSection';
+import { WallpaperGrid } from './WallpaperGrid';
+import { CategoryPills } from './CategoryPills';
+import type { Wallpaper, Category } from '@/types';
+
+interface HomeClientProps {
+  featured: (Partial<Wallpaper> & { id: string; title: string; image_url: string; thumbnail_url: string | null })[];
+  trending: (Partial<Wallpaper> & { id: string; title: string; image_url: string; thumbnail_url: string | null })[];
+  categories: (Category & { image_url?: string })[];
+  latest: (Partial<Wallpaper> & { id: string; title: string; image_url: string; thumbnail_url: string | null })[];
+}
+
+export function HomeClient({ featured, trending, categories, latest }: HomeClientProps) {
+  const { openModal } = useModalStore();
+
+  return (
+    <div className="min-h-screen bg-bg-primary">
+
+      {/* Hero — TOP images showcase */}
+      <HeroSection featured={featured} />
+
+      {/* Categories — only when populated */}
+      {categories.length > 0 && (
+        <section className="home-section py-6 px-4 md:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <CategoryPills categories={categories} />
+          </div>
+        </section>
+      )}
+
+      {/* Trending */}
+      {trending.length > 0 && (
+        <section className="home-section py-6 px-4 md:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Flame className="w-5 h-5 text-orange-500" />
+                <h2 className="text-lg font-semibold text-text-primary">Trending</h2>
+              </div>
+              <button
+                onClick={() => openModal('browse', { sort: 'trending' })}
+                className="text-sm text-text-secondary hover:text-accent-primary transition-colors flex items-center gap-1"
+              >
+                View all
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+            <WallpaperGrid wallpapers={trending} />
+          </div>
+        </section>
+      )}
+
+      {/* Latest */}
+      {latest.length > 0 && (
+        <section className="home-section py-6 px-4 md:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-cyan-500" />
+                <h2 className="text-lg font-semibold text-text-primary">Latest</h2>
+              </div>
+              <button
+                onClick={() => openModal('browse', { sort: 'newest' })}
+                className="text-sm text-text-secondary hover:text-accent-primary transition-colors flex items-center gap-1"
+              >
+                View all
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+            <WallpaperGrid wallpapers={latest} />
+          </div>
+        </section>
+      )}
+
+    </div>
+  );
+}

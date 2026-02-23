@@ -1,23 +1,14 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Lato } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Header, Footer, MobileNav } from "@/components/layout";
 import { ToastContainer } from "@/components/ui";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ModalProvider } from "@/components/modals";
 
-const cormorant = Cormorant_Garamond({
-  variable: "--font-cormorant",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  style: ["normal", "italic"],
-  display: "swap",
-});
-
-const lato = Lato({
-  variable: "--font-lato",
-  subsets: ["latin"],
-  weight: ["300", "400", "700"],
   display: "swap",
 });
 
@@ -57,7 +48,7 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="dark" suppressHydrationWarning>
       <body
-        className={`${lato.variable} ${cormorant.variable} font-sans antialiased min-h-screen flex flex-col bg-bg-primary text-text-primary`}
+        className={`${inter.variable} font-sans antialiased min-h-screen flex flex-col bg-bg-primary text-text-primary`}
       >
         <AuthProvider>
           <Header />

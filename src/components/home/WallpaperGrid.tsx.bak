@@ -1,0 +1,191 @@
+/**
+ * Wallpaper Grid Component
+ *
+ * Premium wallpaper grid with:
+ * - 3D tilt perspective on hover
+ * - Heart burst animation on like
+ * - Shimmer skeleton loading
+ * - Staggered entrance animation
+ */
+
+'use client';
+
+import { useState, useCallback } from 'react';
+import { useModalStore } from '@/stores/modalStore';
+import { cn } from '@/lib/utils/cn';
+import {
+  Heart,
+  Download,
+  Crown,
+  Eye,
+} from 'lucide-react';
+
+interface Wallpaper {
+  id: string;
+  title: string;
+  image_url: string;
+  thumbnail_url?: string | null;
+  is_premium?: boolean;
+  is_featured?: boolean;
+  like_count?: number;
+  view_count?: number;
+}
+
+interface WallpaperGridProps {
+  wallpapers: Wallpaper[];
+}
+
+export function WallpaperGrid({ wallpapers }: WallpaperGridProps) {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 md:gap-4 stagger-grid">
+      {wallpapers.map((wallpaper, index) => (
+        <WallpaperCard
+          key={wallpaper.id}
+          wallpaper={wallpaper}
+          index={index}
+        />
+      ))}
+    </div>
+  );
+}
+
+interface WallpaperCardProps {
+  wallpaper: Wallpaper;
+  index: number;
+}
+
+function WallpaperCard({ wallpaper }: WallpaperCardProps) {
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(wallpaper.like_count || 0);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [showBurst, setShowBurst] = useState(false);
+  const { openModal } = useModalStore();
+
+  const handleLike = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!liked) {
+      setShowBurst(true);
+      setTimeout(() => setShowBurst(false), 500);
+    }
+
+    setLiked(!liked);
+    setLikeCount(prev => liked ? prev - 1 : prev + 1);
+  }, [liked]);
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    openModal('wallpaper', { wallpaperId: wallpaper.id });
+  };
+
+  const displayImage = wallpaper.thumbnail_url || wallpaper.image_url;
+
+  return (
+    <div
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleClick(e as any);
+        }
+      }}
+      className="card-3d group relative block aspect-[9/16] overflow-hidden rounded-xl bg-bg-secondary text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent-primary focus:ring-offset-2 focus:ring-offset-bg-primary"
+    >
+      <div className="card-3d-inner w-full h-full relative">
+        {/* Image with Loading State */}
+        <div className="absolute inset-0">
+          <img
+            src={displayImage || ''}
+            alt={wallpaper.title}
+            loading="lazy"
+            onLoad={() => setImageLoaded(true)}
+            className={cn(
+              'w-full h-full object-cover transition-transform duration-500',
+              'group-hover:scale-105',
+              imageLoaded ? 'opacity-100' : 'opacity-0'
+            )}
+          />
+
+          {/* Shimmer Skeleton */}
+          {!imageLoaded && (
+            <div className="absolute inset-0 shimmer rounded-xl" />
+          )}
+        </div>
+
+        {/* Gradient Overlays */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+        {/* Premium Badge */}
+        {wallpaper.is_premium && (
+          <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-premium-gold to-amber-500">
+            <Crown className="w-3 h-3 text-bg-primary" />
+            <span className="text-[10px] font-bold text-bg-primary uppercase tracking-wide">Pro</span>
+          </div>
+        )}
+
+        {/* Like Button with heart burst */}
+        <button
+          onClick={handleLike}
+          className={cn(
+            'absolute top-2 right-2 p-2 rounded-full backdrop-blur-sm transition-all duration-200',
+            showBurst && 'heart-burst',
+            liked
+              ? 'bg-error/20 text-error'
+              : 'bg-black/20 text-white/70 hover:text-white hover:bg-black/40'
+          )}
+          aria-label={liked ? 'Unlike' : 'Like'}
+        >
+          <Heart
+            className={cn(
+              'w-4 h-4 transition-transform',
+              showBurst && 'heart-pop',
+              liked && 'fill-current'
+            )}
+          />
+        </button>
+
+        {/* Hover Content */}
+        <div className="absolute inset-x-0 bottom-0 p-3 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+          <h3 className="text-sm font-medium text-white line-clamp-1 mb-1.5">
+            {wallpaper.title}
+          </h3>
+          <div className="flex items-center gap-3 text-xs text-white/60">
+            <span className="flex items-center gap-1">
+              <Heart className={cn('w-3 h-3', liked && 'text-error fill-error')} />
+              {likeCount.toLocaleString()}
+            </span>
+            {wallpaper.view_count !== undefined && (
+              <span className="flex items-center gap-1">
+                <Eye className="w-3 h-3" />
+                {wallpaper.view_count.toLocaleString()}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Quick Download Overlay */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <div className="p-3 rounded-full bg-white/20 backdrop-blur-md transform scale-75 group-hover:scale-100 transition-transform duration-300">
+            <Download className="w-5 h-5 text-white" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Wallpaper Grid Skeleton — shimmer effect
+ */
+export function WallpaperGridSkeleton({ count = 8 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 md:gap-4">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="aspect-[9/16] rounded-xl shimmer" />
+      ))}
+    </div>
+  );
+}
